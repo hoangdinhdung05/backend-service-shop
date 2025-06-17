@@ -6,8 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 
-import java.util.Objects;
-
 public class ResponseSuccess extends ResponseEntity<ResponseSuccess.Payload> {
 
     public ResponseSuccess(HttpStatus status, String message) {

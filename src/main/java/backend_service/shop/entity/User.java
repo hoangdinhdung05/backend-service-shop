@@ -1,21 +1,19 @@
 package backend_service.shop.entity;
 
-import backend_service.shop.dto.validator.EmailPattern;
 import backend_service.shop.util.Gender;
 import backend_service.shop.util.UserStatus;
 import backend_service.shop.util.UserType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Builder
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "User")
@@ -36,6 +34,10 @@ public class User extends AbstractEntity {
 
     @Column(name = "password")
     private String password;
+
+    @Column(name = "date_of_birth")
+    @Temporal(TemporalType.DATE)
+    private Date dateOfBirth;
 
     @Column(name = "gender")
     @Enumerated(EnumType.STRING)

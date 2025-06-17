@@ -1,23 +1,32 @@
 package backend_service.shop.dto.response;
 
+import backend_service.shop.util.Gender;
+import backend_service.shop.util.UserStatus;
 import lombok.*;
 import java.io.Serializable;
+import java.util.Date;
 
 @Getter
-@Setter
 @Builder
 public class UserDetailResponse implements Serializable {
     private Long id;
+
     private String firstName;
+
     private String lastName;
-    private String phone;
+
     private String email;
 
-    public UserDetailResponse(Long id, String firstName, String lastName, String phone, String email) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.phone = phone;
-        this.email = email;
-    }
+    private String phone;
+
+    private Date dateOfBirth;
+
+    private Gender gender;
+
+    private String username;
+
+    private String type;
+
+    private UserStatus status;
+
 }
