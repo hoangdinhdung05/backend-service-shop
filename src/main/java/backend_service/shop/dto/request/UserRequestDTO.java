@@ -14,7 +14,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Set;
-
 import static backend_service.shop.util.Gender.*;
 
 @Getter

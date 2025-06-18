@@ -82,28 +82,43 @@ public class AuthService {
     public TokenResponse refreshToken(HttpServletRequest request) {
         log.info("---------- refreshToken ----------");
 
-        final String refreshToken = request.getHeader(REFERER);
-        if (StringUtils.isBlank(refreshToken)) {
-            throw new InvalidDataException("Token must be not blank");
+        final String authHeader = request.getHeader("Authorization");
+        if (StringUtils.isBlank(authHeader) || !authHeader.startsWith("Bearer ")) {
+            throw new InvalidDataException("Refresh token must be provided in Authorization header");
         }
+
+        final String refreshToken = authHeader.substring(7);
+
         final String userName = jwtService.extractUsername(refreshToken, REFRESH_TOKEN);
         var user = userService.getByUsername(userName);
+
         if (!jwtService.isValid(refreshToken, REFRESH_TOKEN, user)) {
-            throw new InvalidDataException("Not allow access with this token");
+            throw new InvalidDataException("Invalid refresh token");
         }
 
-        // create new access token
-        String accessToken = jwtService.generateToken(user);
+//        if (blacklistedTokenService.isBlacklisted(refreshToken)) {
+//            throw new InvalidDataException("Refresh token has been invalidated");
+//        }
 
-        // save token to db
-        tokenService.save(Token.builder().username(user.getUsername()).accessToken(accessToken).refreshToken(refreshToken).build());
+        // Tạo token mới
+        String accessToken = jwtService.generateToken(user);
+        // Optionally: tạo refresh token mới
+        // String newRefreshToken = jwtService.generateRefreshToken(user);
+
+        // Lưu token mới
+        tokenService.save(Token.builder()
+                .username(user.getUsername())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken) // hoặc newRefreshToken
+                .build());
 
         return TokenResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .refreshToken(refreshToken) // hoặc newRefreshToken
                 .userId(user.getId())
                 .build();
     }
+
 
     /**
      * Logout
