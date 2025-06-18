@@ -2,7 +2,7 @@ package backend_service.shop.service.impl;
 
 import backend_service.shop.dto.request.AddressRequestDTO;
 import backend_service.shop.dto.request.UserRequestDTO;
-import backend_service.shop.dto.response.PageResponse;
+import backend_service.shop.dto.response.system.PageResponse;
 import backend_service.shop.dto.response.UserDetailResponse;
 import backend_service.shop.entity.Address;
 import backend_service.shop.entity.User;
@@ -29,15 +29,16 @@ import java.util.Set;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+//    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDetailsService userDetailsService() {
-        return null;
+        return username -> userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     @Override
-    public User getUserByUsername(String userName) {
+    public User getByUsername(String userName) {
         return this.userRepository.findByUsername(userName)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
@@ -55,7 +56,7 @@ public class UserServiceImpl implements UserService {
                 .lastName(requestDTO.getLastName())
                 .username(requestDTO.getUsername())
                 .email(requestDTO.getEmail())
-                .password(passwordEncoder.encode(requestDTO.getPassword()))
+                .password(requestDTO.getPassword())
                 .gender(requestDTO.getGender())
                 .phoneNumber(requestDTO.getPhone())
                 .userType(UserType.valueOf(requestDTO.getType().toUpperCase()))
@@ -87,7 +88,7 @@ public class UserServiceImpl implements UserService {
             user.setEmail(request.getEmail());
         }
         user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(request.getPassword());
         user.setUserStatus(request.getStatus());
         user.setUserType(UserType.valueOf(request.getType().toUpperCase()));
         user.setAddresses(convertToAddress(request.getAddresses()));
@@ -178,6 +179,11 @@ public class UserServiceImpl implements UserService {
                 .total(page.getTotalPages())
                 .items(responseList)
                 .build();
+    }
+
+    @Override
+    public List<String> findAllRolesByUserId(long userId) {
+        return userRepository.findAllRolesByUserId(userId);
     }
 
     /**

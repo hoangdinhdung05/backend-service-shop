@@ -36,4 +36,7 @@ openapi:
     version: 1.0.0
 
 jwt:
-  secretKey: abc@123
+  expiryHour: 1
+  expiryDay: 15
+  accessKey: ${JWT_SECRET_KEY}
+  refreshKey: ${JWT_SECRET_KEY}

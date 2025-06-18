@@ -2,9 +2,9 @@ package backend_service.shop.controller;
 
 import backend_service.shop.config.Translator;
 import backend_service.shop.dto.request.UserRequestDTO;
-import backend_service.shop.dto.response.PageResponse;
-import backend_service.shop.dto.response.ResponseData;
-import backend_service.shop.dto.response.ResponseError;
+import backend_service.shop.dto.response.system.PageResponse;
+import backend_service.shop.dto.response.system.ResponseData;
+import backend_service.shop.dto.response.system.ResponseError;
 import backend_service.shop.dto.response.UserDetailResponse;
 import backend_service.shop.service.UserService;
 import backend_service.shop.util.UserStatus;
@@ -15,6 +15,7 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -81,6 +82,7 @@ public class UserController {
         }
     }
 
+    @PreAuthorize("hasAuthority('admin')")
     @Operation(summary = "Get user detail", description = "Send a request via this API to get user information")
     @GetMapping("/{userId}")
     public ResponseData<?> getUser(@PathVariable @Min(value = 1) long userId) {
@@ -97,6 +99,7 @@ public class UserController {
         }
     }
 
+    @PreAuthorize("hasAuthority('admin')")
     @Operation(summary = "Get list of users per pageNo", description = "Send a request via this API to get user list by pageNo and pageSize")
     @GetMapping("/list")
     public ResponseData<?> getAllUsers(@RequestParam(defaultValue = "0", required = false) int pageNo,

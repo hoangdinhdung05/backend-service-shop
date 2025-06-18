@@ -1,4 +1,4 @@
-package backend_service.shop.dto.response;
+package backend_service.shop.dto.response.system;
 
 import org.springframework.http.HttpStatus;
 

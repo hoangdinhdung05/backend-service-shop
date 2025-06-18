@@ -3,10 +3,12 @@ package backend_service.shop.entity;
 import backend_service.shop.util.Gender;
 import backend_service.shop.util.UserStatus;
 import backend_service.shop.util.UserType;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +20,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity(name = "User")
 @Table(name = "tbl_user")
-public class User extends AbstractEntity {
+public class User extends AbstractEntity<Long> implements UserDetails {
 
     @Column(name = "first_name")
     private String firstName;
@@ -55,17 +57,51 @@ public class User extends AbstractEntity {
     private UserStatus userStatus;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "user")
-    @JsonIgnore
     private Set<Address> addresses = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    private Set<UserHasRole> roles = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    private Set<GroupHasUser> groups = new HashSet<>();
+
     public void saveAddress(Address address) {
-        if(address != null) {
-            if(addresses == null) {
+        if (address != null) {
+            if (addresses == null) {
                 addresses = new HashSet<>();
             }
             addresses.add(address);
-            address.setUser(this); //save user_id
+            address.setUser(this); // save user_id
         }
+    }
+
+    /**
+     * Get role and permission
+     * @return
+     */
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream().map(u -> new SimpleGrantedAuthority(u.getRole().getName())).toList();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return UserStatus.ACTIVE.equals(userStatus);
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 
 }

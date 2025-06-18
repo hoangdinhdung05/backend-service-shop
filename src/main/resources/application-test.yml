@@ -15,3 +15,6 @@ openapi:
     title: API Document
     version: 1.0.0
 
+jwt:
+  token:
+    secretKey: ${JWT_SECRET_KEY}

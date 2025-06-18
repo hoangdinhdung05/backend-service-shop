@@ -1,4 +1,4 @@
-package backend_service.shop.dto.response;
+package backend_service.shop.dto.response.system;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
