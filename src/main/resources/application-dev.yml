@@ -1,4 +1,21 @@
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: hoangdinhdung0205@gmail.com
+    password: tlcednddbpagetmk
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
   config:
     activate:
       on-profile: dev
@@ -28,6 +45,7 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
 openapi:
   service:
     api-docs: backend-service
