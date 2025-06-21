@@ -1,12 +1,11 @@
-package backend_service.shop.service;
+package backend_service.shop.service.AuthService;
 
 import backend_service.shop.dto.request.SignInRequest;
 import backend_service.shop.dto.response.TokenResponse;
 import backend_service.shop.entity.Token;
-import backend_service.shop.entity.User;
 import backend_service.shop.exception.InvalidDataException;
-import backend_service.shop.exception.ResourceNotFoundException;
 import backend_service.shop.repository.UserRepository;
+import backend_service.shop.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,13 +14,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import static backend_service.shop.util.TokenType.ACCESS_TOKEN;
 import static backend_service.shop.util.TokenType.REFRESH_TOKEN;
-import static org.springframework.http.HttpHeaders.REFERER;
 
 @Service
 @RequiredArgsConstructor

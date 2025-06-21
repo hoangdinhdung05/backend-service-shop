@@ -1,5 +1,7 @@
 package backend_service.shop.config;
 
+import backend_service.shop.helper.OAuth2AuthenticationSuccessHandler;
+import backend_service.shop.service.AuthService.CustomOAuth2UserService;
 import backend_service.shop.service.UserService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -30,19 +32,25 @@ public class SecurityConfig {
 
     private final UserService userService;
     private final PreFilter preFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    private final String[] WHITE_LIST = {"/auth/**"};
+    private final String[] WHITE_LIST = {
+            "/auth/**",
+            "/oauth2/**", // cần mở đường dẫn này để OAuth2 login hoạt động
+            "/login/oauth2/**" // callback URL mặc định của Spring Security
+    };
 
     @Bean
     public WebMvcConfigurer corsConfigure() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                registry.addMapping("**")
+                registry.addMapping("/**")
                         .allowedOrigins("http://localhost:8500")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE") // Allowed HTTP methods
-                        .allowedHeaders("*") // Allowed request headers
-                        .allowCredentials(false)
+                        .allowedMethods("GET", "POST", "PUT", "DELETE")
+                        .allowedHeaders("*")
+                        .allowCredentials(true)
                         .maxAge(3600);
             }
         };
@@ -56,26 +64,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain configure(@NonNull HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(WHITE_LIST) //create WHITE_LIST
-                        .permitAll()
-                        .anyRequest().authenticated()) // block request if not have token or role and permission
-                .sessionManagement(manager -> manager
-                        .sessionCreationPolicy(STATELESS))
-                .authenticationProvider(provider()).addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class);
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(WHITE_LIST).permitAll()
+                        .anyRequest().authenticated())
+                .sessionManagement(sess -> sess.sessionCreationPolicy(STATELESS))
+                .authenticationProvider(provider())
+                .addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler) // Trả token sau đăng nhập OAuth2
+                );
+
         return http.build();
     }
 
-    /**
-     * Use request to swagger
-     *
-     * @return
-     */
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return webSecurity ->
-                webSecurity.ignoring()
-                        .requestMatchers("/actuator/**", "/v3/**", "/webjars/**", "/swagger-ui*/*swagger-initializer.js", "/swagger-ui*/**");
+        return web -> web.ignoring().requestMatchers(
+                "/actuator/**",
+                "/v3/**",
+                "/webjars/**",
+                "/swagger-ui*/**"
+        );
     }
 
     @Bean
@@ -83,17 +94,11 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    /**
-     * Use query to database get info User
-     *
-     * @return
-     */
     @Bean
     public AuthenticationProvider provider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userService.userDetailsService());
         provider.setPasswordEncoder(passwordEncoder());
-
         return provider;
     }
 }

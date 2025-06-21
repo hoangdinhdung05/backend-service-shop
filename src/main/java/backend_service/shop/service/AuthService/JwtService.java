@@ -1,9 +1,7 @@
-package backend_service.shop.service;
+package backend_service.shop.service.AuthService;
 
 import backend_service.shop.util.TokenType;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Date;
 
 public interface JwtService {
 

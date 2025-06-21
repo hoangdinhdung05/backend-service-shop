@@ -1,6 +1,6 @@
 package backend_service.shop.config;
 
-import backend_service.shop.service.JwtService;
+import backend_service.shop.service.AuthService.JwtService;
 import backend_service.shop.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

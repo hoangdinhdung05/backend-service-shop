@@ -1,5 +1,6 @@
 package backend_service.shop.entity;
 
+import backend_service.shop.util.AuthProvider;
 import backend_service.shop.util.Gender;
 import backend_service.shop.util.UserStatus;
 import backend_service.shop.util.UserType;
@@ -47,6 +48,13 @@ public class User extends AbstractEntity<Long> implements UserDetails {
 
     @Column(name = "phone_number")
     private String phoneNumber;
+
+    @Column(name = "auth_provider")
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider; // "google", "github"
+
+    @Column(name = "provider_id")
+    private String providerId; // ID của user từ OAuth provider
 
     @Column(name = "user_type")
     @Enumerated(EnumType.STRING)

@@ -1,4 +1,21 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23li9EeXfXfc3JEhJr
+            client-secret: c9ad5f65c5765b8b5c8b2da314b3c4065d05b51f
+            scope:
+              - read:user
+              - user:email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+
   mail:
     host: smtp.gmail.com
     port: 587

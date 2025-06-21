@@ -1,4 +1,4 @@
-package backend_service.shop.service;
+package backend_service.shop.service.AuthService;
 
 import backend_service.shop.entity.Token;
 import backend_service.shop.exception.ResourceNotFoundException;

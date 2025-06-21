@@ -2,7 +2,7 @@ package backend_service.shop.controller;
 
 import backend_service.shop.dto.request.SignInRequest;
 import backend_service.shop.dto.response.TokenResponse;
-import backend_service.shop.service.AuthService;
+import backend_service.shop.service.AuthService.AuthService;
 import backend_service.shop.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
