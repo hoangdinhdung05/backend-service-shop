@@ -9,7 +9,6 @@ import backend_service.shop.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.io.File;
 import java.time.LocalDateTime;
 
@@ -31,14 +30,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         try {
 
-            Invoice invoice = Invoice.builder()
-                    .order(order)
-                    .invoiceCode("INV_" + order.getId())
-                    .amount(order.getTotalPrice())
-                    .paymentMethod(order.getPaymentMethod())
-                    .isPaid(false)
-                    .issuedAt(LocalDateTime.now())
-                    .build();
+            Invoice invoice = buildInvoice(order);
 
             invoice = invoiceRepository.save(invoice);
 
@@ -62,6 +54,17 @@ public class InvoiceServiceImpl implements InvoiceService {
             log.info("Generate invoice pdf fail {}", e.getMessage(), e);
             throw new RuntimeException("No create pdf", e);
         }
+    }
+
+    private Invoice buildInvoice(Order order) {
+        return Invoice.builder()
+                .order(order)
+                .invoiceCode("INV_" + order.getId())
+                .amount(order.getTotalPrice())
+                .paymentMethod(order.getPaymentMethod())
+                .isPaid(false)
+                .issuedAt(LocalDateTime.now())
+                .build();
     }
 }
 

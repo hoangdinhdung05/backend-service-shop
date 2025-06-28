@@ -95,9 +95,9 @@ public class AuthService {
             throw new InvalidDataException("Invalid refresh token");
         }
 
-//        if (blacklistedTokenService.isBlacklisted(refreshToken)) {
-//            throw new InvalidDataException("Refresh token has been invalidated");
-//        }
+        if (blacklistedTokenService.isBlacklisted(refreshToken)) {
+            throw new InvalidDataException("Refresh token has been invalidated");
+        }
 
         // Tạo token mới
         String accessToken = jwtService.generateToken(user);

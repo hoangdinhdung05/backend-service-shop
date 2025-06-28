@@ -1,5 +1,6 @@
 package backend_service.shop.dto.response;
 
+import backend_service.shop.entity.Discount;
 import backend_service.shop.util.OrderStatus;
 import backend_service.shop.util.PaymentMethod;
 import lombok.*;
@@ -19,8 +20,9 @@ public class OrderResponse implements Serializable {
     private String note;
     private PaymentMethod paymentMethod;
     private OrderStatus status;
-    private BigDecimal discount;
+    private Discount discount;
     private BigDecimal totalPrice;
     private Integer totalQuantity;
+    private BigDecimal finalPrice;
     private List<OrderDetailResponse> orderDetails;
 }

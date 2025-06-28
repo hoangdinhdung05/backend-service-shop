@@ -2,18 +2,20 @@ package backend_service.shop.service.impl;
 
 import backend_service.shop.dto.request.OrderDetailRequestDTO;
 import backend_service.shop.dto.request.OrderRequestDTO;
+import backend_service.shop.dto.response.DiscountResult;
 import backend_service.shop.dto.response.OrderDetailResponse;
 import backend_service.shop.dto.response.OrderResponse;
 import backend_service.shop.dto.response.system.PageResponse;
+import backend_service.shop.entity.Discount;
+import backend_service.shop.entity.DiscountUsage;
 import backend_service.shop.entity.Order;
 import backend_service.shop.entity.OrderDetail;
 import backend_service.shop.exception.ResourceNotFoundException;
-import backend_service.shop.repository.OrderDetailRepository;
-import backend_service.shop.repository.OrderRepository;
-import backend_service.shop.repository.ProductRepository;
-import backend_service.shop.repository.UserRepository;
+import backend_service.shop.repository.*;
+import backend_service.shop.service.DiscountService;
 import backend_service.shop.service.InvoiceService;
 import backend_service.shop.service.OrderService;
+import backend_service.shop.util.DiscountType;
 import backend_service.shop.util.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +40,9 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final InvoiceService invoiceService;
+    private final DiscountService discountService;
+    private final DiscountRepository discountRepository;
+    private final DiscountUsageRepository discountUsageRepository;
 
     @Override
     @Transactional
@@ -70,7 +76,17 @@ public class OrderServiceImpl implements OrderService {
             orderDetails.add(detail);
         }
 
-        // TODO: Apply discount logic if any
+        //Logic use discount
+        Discount discount = null;
+        BigDecimal discountAmount = BigDecimal.ZERO;
+
+        if(orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().isBlank()) {
+            log.info("==============User discount logic=============");
+
+            var discountResult = applyDiscount(orderRequest.getDiscountCode(), user.getId(), totalPrice);
+            discount = discountResult.getDiscount();
+            discountAmount = discountResult.getDiscountAmount();
+        }
 
         // 3. Create Order
         Order order = Order.builder()
@@ -78,14 +94,26 @@ public class OrderServiceImpl implements OrderService {
                 .shippingAddress(orderRequest.getShippingAddress())
                 .note(orderRequest.getNote())
                 .paymentMethod(orderRequest.getPaymentMethod())
-                .discount(orderRequest.getDiscount())
-                .status(OrderStatus.PENDING)
+                .discount(discount)
+                .discountAmount(discountAmount)
                 .totalPrice(totalPrice)
+                .finalPrice(totalPrice.subtract(discountAmount))
+                .status(OrderStatus.PENDING)
                 .totalQuantity(totalQuantity)
                 .build();
 
         // 4. Save Order
         order = orderRepository.save(order);
+
+        if (discount != null) {
+            DiscountUsage usage = DiscountUsage.builder()
+                    .user(user)
+                    .discount(discount)
+                    .order(order)
+                    .usedAt(LocalDateTime.now())
+                    .build();
+            discountUsageRepository.save(usage);
+        }
 
         // 5. Gán order cho từng orderDetail và lưu
         for (OrderDetail detail : orderDetails) {
@@ -171,6 +199,59 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
+
+    private DiscountResult applyDiscount(String discountCode, Long userId, BigDecimal totalPrice) {
+        Discount discount = discountService.getValidDiscountByCode(discountCode);
+
+        // Check ngày hợp lệ
+        LocalDateTime now = LocalDateTime.now();
+        if (discount.getStartDate() != null && discount.getStartDate().isAfter(now)) {
+            throw new IllegalArgumentException("Discount not started yet");
+        }
+        if (discount.getEndDate() != null && discount.getEndDate().isBefore(now)) {
+            throw new IllegalArgumentException("Discount has expired");
+        }
+
+        // Kiểm tra số lượt dùng tổng
+        if (discount.getMaxUses() != null && discount.getMaxUses() <= 0) {
+            throw new IllegalArgumentException("Discount has been fully used");
+        }
+
+        // Kiểm tra số lượt dùng bởi user
+        int useByUser = discountUsageRepository.countByUserIdAndDiscount_Code(userId, discountCode);
+        if (discount.getMaxUsesPerUser() != null && useByUser >= discount.getMaxUsesPerUser()) {
+            throw new IllegalArgumentException("You have already used this discount code the maximum number of times");
+        }
+
+        // Kiểm tra min order amount
+        if (discount.getMinOrderAmount() != null && totalPrice.compareTo(discount.getMinOrderAmount()) < 0) {
+            throw new IllegalArgumentException("Order total does not meet the minimum requirement for this discount");
+        }
+
+        // Tính discount amount
+        BigDecimal discountAmount;
+        if (discount.getDiscountType().equals(DiscountType.PERCENTAGE)) {
+            discountAmount = totalPrice.multiply(discount.getValue()).divide(BigDecimal.valueOf(100));
+        } else {
+            discountAmount = discount.getValue();
+        }
+
+        // Không được vượt quá tổng giá
+        if (discountAmount.compareTo(totalPrice) > 0) {
+            discountAmount = totalPrice;
+        }
+
+        // Trừ maxUses
+        if (discount.getMaxUses() != null) {
+            discount.setMaxUses(discount.getMaxUses() - 1);
+        }
+
+        discountRepository.save(discount);
+
+        return new DiscountResult(discount, discountAmount);
+    }
+
+
     /**
      * Convert data to order detail response
      *
@@ -211,6 +292,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getTotalQuantity())
                 .orderDetails(detailResponses)
+                .finalPrice(order.getFinalPrice())
                 .build();
     }
 }

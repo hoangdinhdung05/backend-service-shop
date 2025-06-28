@@ -37,13 +37,20 @@ public class Order extends AbstractEntity<Long> {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    @Column(name = "discount", precision = 15, scale = 2)
-    private BigDecimal discount;
-
     @Column(name = "total_price", precision = 15, scale = 2)
     private BigDecimal totalPrice;
 
     @Column(name = "total_quantity")
     private Integer totalQuantity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "discount_id")
+    private Discount discount;
+
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
+
+    @Column(name = "final_price")
+    private BigDecimal finalPrice;
 
 }
