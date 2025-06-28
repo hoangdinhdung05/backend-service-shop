@@ -52,6 +52,11 @@ public class JwtServiceImpl implements JwtService {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token, type));
     }
 
+    @Override
+    public Date extractExpiration(String token, TokenType type) {
+        return extractClaim(token, type, Claims::getExpiration);
+    }
+
     private String generateToken(Map<String, Object> claims, UserDetails userDetails) {
         return Jwts.builder()
                 .setClaims(claims)
@@ -92,7 +97,4 @@ public class JwtServiceImpl implements JwtService {
         return extractExpiration(token, type).before(new Date());
     }
 
-    private Date extractExpiration(String token, TokenType type) {
-        return extractClaim(token, type, Claims::getExpiration);
-    }
 }

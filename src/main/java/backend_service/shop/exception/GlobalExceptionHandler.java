@@ -182,4 +182,34 @@ public class GlobalExceptionHandler {
         return errorResponse;
     }
 
+    @ExceptionHandler(TokenBlacklistedException.class)
+    @ResponseStatus(UNAUTHORIZED)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = {@Content(mediaType = APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(
+                                    name = "401 Token Blacklisted",
+                                    summary = "Handle exception when token has been blacklisted",
+                                    value = """
+                                        {
+                                          "timestamp": "2025-06-28T15:10:00.000+00:00",
+                                          "status": 401,
+                                          "path": "/api/v1/...",
+                                          "error": "Unauthorized",
+                                          "message": "Token has been invalidated. Please login again."
+                                        }
+                                        """
+                            ))})
+    })
+    public ErrorResponse handleTokenBlacklisted(TokenBlacklistedException e, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setTimestamp(new Date());
+        errorResponse.setPath(request.getDescription(false).replace("uri=", ""));
+        errorResponse.setStatus(UNAUTHORIZED.value());
+        errorResponse.setError(UNAUTHORIZED.getReasonPhrase());
+        errorResponse.setMessage(e.getMessage());
+
+        return errorResponse;
+    }
+
 }

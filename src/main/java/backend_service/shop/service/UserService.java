@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface UserService {
 
-    UserDetailsService userDetailsService();
+//    UserDetailsService userDetailsService();
 
     User getByUsername(String userName);
 

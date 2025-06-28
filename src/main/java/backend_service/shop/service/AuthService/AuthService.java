@@ -6,6 +6,7 @@ import backend_service.shop.entity.Token;
 import backend_service.shop.exception.InvalidDataException;
 import backend_service.shop.repository.UserRepository;
 import backend_service.shop.service.UserService;
+import backend_service.shop.util.TokenType;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 import java.util.List;
 import static backend_service.shop.util.TokenType.ACCESS_TOKEN;
 import static backend_service.shop.util.TokenType.REFRESH_TOKEN;
@@ -28,6 +31,7 @@ public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final BlacklistedTokenService blacklistedTokenService;
 
     public TokenResponse authenticate(SignInRequest signInRequest) {
         log.info("---------- authenticate ----------");
@@ -123,15 +127,20 @@ public class AuthService {
      */
     public String logout(HttpServletRequest request) {
         log.info("---------- logout ----------");
-        //TODO: Blacklisted Token
+
         final String authHeader = request.getHeader("Authorization");
         if (StringUtils.isBlank(authHeader) || !authHeader.startsWith("Bearer ")) {
             throw new InvalidDataException("Authorization header is missing or invalid");
         }
 
-        final String token = authHeader.substring(7); // Bỏ chữ "Bearer "
+        final String token = authHeader.substring(7);
         final String userName = jwtService.extractUsername(token, ACCESS_TOKEN);
+
         tokenService.delete(userName);
+
+        Date expiry = jwtService.extractExpiration(token, ACCESS_TOKEN);
+        long millisUntilExpiry = expiry.getTime() - System.currentTimeMillis();
+        blacklistedTokenService.blacklistToken(token, millisUntilExpiry);
 
         return "Deleted!";
     }

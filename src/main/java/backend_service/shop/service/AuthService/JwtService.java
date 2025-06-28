@@ -3,6 +3,8 @@ package backend_service.shop.service.AuthService;
 import backend_service.shop.util.TokenType;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Date;
+
 public interface JwtService {
 
     String generateToken(UserDetails user);
@@ -12,5 +14,7 @@ public interface JwtService {
     String extractUsername(String token, TokenType type);
 
     boolean isValid(String token, TokenType type, UserDetails user);
+
+    Date extractExpiration(String token, TokenType type);
 
 }

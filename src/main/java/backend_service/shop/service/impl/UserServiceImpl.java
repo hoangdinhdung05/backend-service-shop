@@ -29,13 +29,13 @@ import java.util.Set;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-//    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    @Override
-    public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
+//    @Override
+//    public UserDetailsService userDetailsService() {
+//        return username -> userRepository.findByUsername(username)
+//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+//    }
 
     @Override
     public User getByUsername(String userName) {
@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
                 .lastName(requestDTO.getLastName())
                 .username(requestDTO.getUsername())
                 .email(requestDTO.getEmail())
-                .password(requestDTO.getPassword())
+                .password(passwordEncoder.encode(requestDTO.getPassword()))
                 .gender(requestDTO.getGender())
                 .phoneNumber(requestDTO.getPhone())
                 .userType(UserType.valueOf(requestDTO.getType().toUpperCase()))
@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
             user.setEmail(request.getEmail());
         }
         user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setUserStatus(request.getStatus());
         user.setUserType(UserType.valueOf(request.getType().toUpperCase()));
         user.setAddresses(convertToAddress(request.getAddresses()));

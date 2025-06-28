@@ -1,7 +1,10 @@
 package backend_service.shop.config;
 
 import backend_service.shop.helper.OAuth2AuthenticationSuccessHandler;
+import backend_service.shop.service.AuthService.BlacklistedTokenService;
 import backend_service.shop.service.AuthService.CustomOAuth2UserService;
+import backend_service.shop.service.AuthService.CustomUserDetailsService;
+import backend_service.shop.service.AuthService.JwtService;
 import backend_service.shop.service.UserService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -30,15 +33,17 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final UserService userService;
-    private final PreFilter preFilter;
+//    private final UserService userService;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final JwtService jwtService;
+    private final BlacklistedTokenService blacklistedTokenService;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     private final String[] WHITE_LIST = {
             "/auth/**",
-            "/oauth2/**", // cần mở đường dẫn này để OAuth2 login hoạt động
-            "/login/oauth2/**" // callback URL mặc định của Spring Security
+            "/oauth2/**",
+            "/login/oauth2/**"
     };
 
     @Bean
@@ -62,6 +67,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public PreFilter preFilter() {
+        return new PreFilter(customUserDetailsService, jwtService, blacklistedTokenService);
+    }
+
+    @Bean
     public SecurityFilterChain configure(@NonNull HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
@@ -69,11 +79,11 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(provider())
-                .addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(preFilter(), UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService))
-                        .successHandler(oAuth2AuthenticationSuccessHandler) // Trả token sau đăng nhập OAuth2
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
                 );
 
         return http.build();
@@ -97,7 +107,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationProvider provider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userService.userDetailsService());
+        provider.setUserDetailsService(customUserDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
